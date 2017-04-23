@@ -1,0 +1,289 @@
+createComposites <- function(data) {
+  
+  data$TotalActivityOccur <- data$SniffAnoEv + data$SniffHeadEv + data$DigEv + data$ActiveHEv + 
+    data$AvoidEv + data$SubEv + data$DefenseEv + data$OpenAggEv + 
+    data$RitAggEv + data$ActiveVEv + data$ApproachEv + data$StereoEv + 
+    data$DomEv + data$SniffBodyEv + data$FollowEv + data$StretchEv + 
+    data$AttackDelEv + data$AttackRecEv
+  
+  data$TotalActivityDuration <- data$SniffAnoDur + data$SniffHeadDur + data$DigDur + data$ActiveHDur + 
+    data$AvoidDur + data$SubDur + data$DefenseDur + data$OpenAggDur + 
+    data$RitAggDur + data$ActiveVDur + data$ApproachDur + data$StereoDur + 
+    data$DomDur + data$SniffBodyDur + data$FollowDur
+  
+  data$TotalSocialOccur <- data$SniffAnoEv + data$SniffHeadEv + data$AvoidEv + data$SubEv + 
+    data$DefenseEv + data$OpenAggEv + data$RitAggEv + data$ApproachEv + data$InactiveTogetherEv +
+    data$DomEv + data$SniffBodyEv + data$FollowEv + data$StretchEv + 
+    data$AttackDelEv + data$AttackRecEv
+  
+  data$TotalSocialDuration <- data$SniffAnoDur + data$SniffHeadDur + data$AvoidDur + data$SubDur + 
+    data$DefenseDur + data$OpenAggDur + data$RitAggDur + data$InactiveTogetherDur +
+    data$ApproachDur + data$DomDur + data$SniffBodyDur + data$FollowDur
+  
+  data$AgonisticDeliveredOccur <- data$FollowEv + data$DomEv + data$AttackDelEv
+  data$AgonisticDeliveredDuration <- data$FollowDur + data$DomDur
+  
+  data$AgonisticReceivedOccur <- data$AvoidEv + data$SubEv + data$AttackRecEv + data$DefenseEv
+  data$AgonisticReceivedDuration <- data$AvoidDur + data$SubDur + data$DefenseDur
+  
+  data$AgonisticTotalOccur <- data$AgonisticDeliveredOccur + data$AgonisticReceivedOccur
+  data$AgonisticTotalDuration <- data$AgonisticDeliveredDuration + data$AgonisticReceivedDuration
+  
+  data$DominanceScoreOccur <- data$AgonisticDeliveredOccur - data$AgonisticReceivedOccur
+  data$DominanceScoreDuration <- data$AgonisticDeliveredDuration - data$AgonisticReceivedDuration
+  
+  data$SocialInvestigationOccur <- data$SniffHeadEv + data$SniffBodyEv + data$SniffAnoEv + data$StretchEv + data$ApproachEv
+  data$SocialInvestigationDuration <- data$SniffHeadDur + data$SniffBodyDur + data$SniffAnoDur + data$ApproachDur
+  
+  data$NonSocialOccur <- data$ActiveHEv + data$ActiveVEv + data$DigEv + data$StereoEv + data$InactiveEv + 
+    data$GroomEv
+  data$NonSocialDuration <- data$ActiveHDur + data$ActiveVDur + data$DigDur + data$StereoDur + 
+    data$InactiveDur + data$GroomDur
+  
+  data$NonSocialLocomotorOccur <- data$ActiveHEv + data$ActiveVEv + data$DigEv
+  data$NonSocialLocomotorDuration <- data$ActiveHDur + data$ActiveVDur + data$DigDur
+  
+  data$InactiveNonSocialOccur <- data$InactiveEv + data$GroomEv
+  data$InactiveNonSocialDuration <- data$InactiveDur + data$GroomDur
+  
+  return(data)
+  
+}
+
+lnTransform <- function(data) {
+  
+  data <- log(data + 1)
+  
+  return(data)
+  
+}
+
+createFactors <- function(data) {
+  data$Gonad <- factor(data$Gonad, levels = c("SHAM", "GDX", "REP"))
+  data$Sex <- as.factor(data$Sex)
+  data$Treatment <- as.factor(data$Treatment)
+  
+  return(data)
+}
+
+interactionGraph <- function(data, yVar, variableName, graphTitle, yMax, fileName, saveGraph = F) {
+  interactionBar <- ggplot(data, aes_string(x = "Gonad", y = yVar, fill = "Treatment")) +
+    stat_summary(fun.y = "mean", geom = "bar", position = "dodge") + 
+    stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.9), width = 0.2, size  = 1) +
+    coord_cartesian(ylim = c(0, yMax)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    
+    labs (title = graphTitle, x = NULL, y = variableName) +
+    scale_x_discrete(breaks=c("SHAM", "GDX", "REP"), limits=c("SHAM", "GDX", "REP"), labels=c("Intact", "Gonadectomy + \nVehicle", "Gonadectomy + \nReplacement")) +
+    scale_fill_manual("Prenatal Treatment", values = c("light gray", "black"), labels = c("Sesame Oil", "Testosterone")) +
+    
+    theme_bw() +
+    theme(plot.title = element_text(colour="black", size=14, margin = margin(30, 0, 0, 0), face="bold"),
+          axis.title.y = element_text(size=14, margin = margin(0, 10, 0, 0), face="bold"),
+          axis.title.x = element_text(size=14, face="bold"),
+          axis.text.y = element_text(size=12, color = "black"), 
+          axis.text.x = element_text(size=12, color = "black", face="bold"), 
+          axis.ticks = element_line(size=1, color = "black"),
+          legend.text = element_text(size = 12, colour = "black"),
+          legend.title = element_text(size = 14, colour = "black", face="bold"),
+          legend.key = element_blank(),
+          legend.key.size = unit(1, "cm"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.line.x = element_line(colour = 'black', size = 1),
+          axis.line.y = element_line(colour = 'black', size = 1))
+  
+  if (saveGraph == T) {
+    pdf(paste("output/PostPuberty/", fileName, sep = ""), 9, 6)
+    interactionBar
+    dev.off()
+  } else {
+    interactionBar
+  }
+  
+}
+
+
+
+interactionPanel <- function(data, yVar, variableName, graphTitle, yMax, fileName, saveGraph = F) {
+  
+  maleGraph <- interactionGraph(subset(data, Sex == "M"), yVar, variableName, "Male", yMax)
+  femaleGraph <- interactionGraph(subset(data, Sex == "F"), yVar, variableName, "Female", yMax)
+  graphLegend <- getLegend(femaleGraph);
+  
+  maleGraph <- maleGraph + theme(legend.position = "none") 
+  femaleGraph <- femaleGraph + theme(legend.position = "none") 
+  
+  if (saveGraph == T) {
+    pdf(paste("output/PostPuberty/", fileName, sep = ""), 12, 5)
+    grid.arrange(maleGraph, femaleGraph, ncol = 2, nrow = 1, widths = c(6, 6), heights = c(5), top = textGrob(graphTitle, gp=gpar(fontsize=18, fontface = "bold")))
+    dev.off()
+  } else {
+    grid.arrange(maleGraph, femaleGraph, ncol = 2, nrow = 1, widths = c(6, 6), heights = c(5), top = textGrob(graphTitle, gp=gpar(fontsize=18, fontface = "bold")))
+  }
+  
+}
+
+dominancePanel <- function(data, yVar, variableName, graphTitle, yMin, yMax, fileName, saveGraph = F) {
+  
+  maleGraph <- dominanceGraph(subset(data, Sex == "M"), yVar, variableName, "Male", yMin, yMax)
+  femaleGraph <- dominanceGraph(subset(data, Sex == "F"), yVar, variableName, "Female", yMin, yMax)
+  graphLegend <- getLegend(femaleGraph);
+  
+  maleGraph <- maleGraph + theme(legend.position = "none") 
+  femaleGraph <- femaleGraph + theme(legend.position = "none") 
+  
+  # note, no legend!
+  
+  if (saveGraph == T) {
+    pdf(paste("output/PostPuberty/", fileName, sep = ""), 12, 5)
+    grid.arrange(maleGraph, femaleGraph, ncol = 2, nrow = 1, widths = c(7, 7), top = textGrob(graphTitle, gp=gpar(fontsize=18, fontface = "bold")))
+    dev.off()
+  } else {
+    grid.arrange(maleGraph, femaleGraph, ncol = 2, nrow = 1, widths = c(7, 7), top = textGrob(graphTitle, gp=gpar(fontsize=18, fontface = "bold")))
+  }
+  
+}
+
+dominanceGraph <- function(data, yVar, variableName, graphTitle, yMin, yMax, fileName, saveGraph = F) {
+  dominanceBar <- ggplot(data, aes_string(x = "Gonad", y = yVar, fill = "Treatment")) +
+    stat_summary(fun.y = "mean", geom = "bar", position = "dodge") + 
+    stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.9), width = 0.2, size  = 1) +
+    coord_cartesian(ylim = c(yMin, yMax)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    
+    labs (title = graphTitle, x = NULL, y = variableName) +
+    scale_x_discrete(breaks=c("SHAM", "GDX", "REP"), limits=c("SHAM", "GDX", "REP"), labels=c("Intact", "Gonadectomy + \nVehicle", "Gonadectomy + \nReplacement")) +
+    scale_fill_manual("Prenatal Treatment", values = c("light gray", "black"), labels = c("Sesame Oil", "Testosterone")) +
+    
+    theme_bw() +
+    theme(plot.title = element_text(colour="black", size=14, margin = margin(30, 0, 0, 0), face="bold"),
+          axis.title.y = element_text(size=14, margin = margin(0, 10, 0, 0), face="bold"),
+          axis.title.x = element_text(size=14, face="bold"),
+          axis.text.y = element_text(size=12, color = "black"), 
+          axis.text.x = element_text(size=12, color = "black", face="bold"), 
+          axis.ticks = element_line(size=1, color = "black"),
+          legend.text = element_text(size = 12, colour = "black"),
+          legend.title = element_text(size = 14, colour = "black", face="bold"),
+          legend.key = element_blank(),
+          legend.key.size = unit(1, "cm"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.line.x = element_line(colour = 'black', size = 1),
+          axis.line.y = element_line(colour = 'black', size = 1))
+  
+  if (saveGraph == T) {
+    pdf(paste("output/PostPuberty/", fileName, sep = ""), 9, 6)
+    dominanceBar
+    dev.off()
+  } else {
+    dominanceBar
+  }
+}
+
+interactionGraphPre <- function(data, yVar, variableName, graphTitle, yMax, nonParametric = FALSE, fileName, saveGraph = F, showLegend = T) {
+  interactionBar <- ggplot(data, aes_string(x = "Sex", y = yVar, fill = "Treatment"))
+  if (nonParametric == FALSE) { 
+    interactionBar <- interactionBar + stat_summary(fun.y = "mean", geom = "bar", position = "dodge") + 
+      stat_summary(fun.data = "mean_se", geom = "errorbar", position = position_dodge(width = 0.9), width = 0.2, size  = 1)
+  } else {
+    interactionBar <- interactionBar + stat_summary(fun.y = "median", geom = "bar", position = "dodge")
+  }
+  
+  interactionBar <- interactionBar + coord_cartesian(ylim = c(0, yMax)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    
+    labs (title = graphTitle, x = NULL, y = variableName) +
+    scale_x_discrete(limits = c("M", "F"), breaks=c("M", "F"), labels=c("Male", "Female")) +
+    scale_fill_manual("Prenatal Treatment", values = c("light gray", "black"), labels = c("Sesame Oil", "Testosterone")) +
+    
+    theme_bw() +
+    theme(plot.title = element_text(colour="black", size=18, margin = margin(60, 0, 0, 0), face="bold"),
+          axis.title.y = element_text(size=18, margin = margin(0, 10, 0, 0), face="bold"),
+          axis.title.x = element_text(size=18, face="bold"),
+          axis.text.y = element_text(size = 14, color = "black", face = "bold"), 
+          axis.text.x = element_text(size=18, color = "black", face="bold"), 
+          axis.ticks = element_line(size=1, color = "black"),
+          legend.text = element_text(size = 14, colour = "black", face = "bold"),
+          legend.title = element_text(size = 18, colour = "black", face = "bold"),
+          legend.key = element_blank(),
+          legend.key.size = unit(1.5,"cm"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.line.x = element_line(colour = 'black', size = 1),
+          axis.line.y = element_line(colour = 'black', size = 1))
+  
+  if (showLegend == F) {
+    interactionBar <- interactionBar + theme(legend.position = "none")
+  }
+  
+  if (saveGraph == T) {
+    pdf(paste("output/PrePuberty/", fileName, sep = ""), 9, 6)
+    interactionBar
+    dev.off()
+  } else {
+    interactionBar
+  }
+  
+}
+
+
+dominanceGraphPre <- function(data, yVar, variableName, graphTitle, yMin, yMax, nonParametric = FALSE, showLegend = T, fileName, saveGraph = F) {
+  dominanceBar <- ggplot(data, aes_string(x = "Sex", y = yVar, fill = "Treatment"))
+  if (nonParametric == FALSE) { 
+    dominanceBar <- dominanceBar + stat_summary(fun.y = "mean", geom = "bar", position = "dodge") + 
+    stat_summary(fun.data = "mean_se", geom = "errorbar", position = position_dodge(width = 0.9), width = 0.2, size  = 1)
+  } else {
+    dominanceBar <- dominanceBar + stat_summary(fun.y = "median", geom = "bar", position = "dodge")
+  }
+      
+  dominanceBar <- dominanceBar + coord_cartesian(ylim = c(yMin, yMax)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    
+    labs (title = graphTitle, x = NULL, y = variableName) +
+    scale_x_discrete(limits = c("M", "F"), breaks=c("M", "F"), labels=c("Male", "Female")) +
+    scale_fill_manual("Prenatal Treatment", values = c("light gray", "black"), labels = c("Sesame Oil", "Testosterone")) +
+    
+    theme_bw() +
+    theme(plot.title = element_text(colour="black", size=18, margin = margin(60, 0, 0, 0), face="bold"),
+          axis.title.y = element_text(size=18, margin = margin(0, 10, 0, 0), face="bold"),
+          axis.title.x = element_text(size=18, face="bold"),
+          axis.text.y = element_text(size = 14, color = "black", face = "bold"), 
+          axis.text.x = element_text(size=18, color = "black", face="bold"), 
+          axis.ticks = element_line(size=1, color = "black"),
+          legend.text = element_text(size = 14, colour = "black", face = "bold"),
+          legend.title = element_text(size = 18, colour = "black", face = "bold"),
+          legend.key = element_blank(),
+          legend.key.size = unit(1.5,"cm"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          axis.line.x = element_line(colour = 'black', size = 1),
+          axis.line.y = element_line(colour = 'black', size = 1))
+  
+  if (showLegend == F) {
+    dominanceBar <- dominanceBar + theme(legend.position = "none")
+  }
+  
+  if (saveGraph == T) {
+    pdf(paste("output/PrePuberty/", fileName, sep = ""), 9, 6)
+    dominanceBar
+    dev.off()
+  } else {
+    dominanceBar
+  }
+}
+
+getLegend <- function(myPlot){
+  tmp <- ggplot_gtable(ggplot_build(myPlot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
